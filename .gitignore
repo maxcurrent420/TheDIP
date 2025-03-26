@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+.parcel-cache/
+
+# Development
+.cache/
+.DS_Store
+*.log

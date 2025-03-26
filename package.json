@@ -1,0 +1,22 @@
+{
+  "name": "dimensional-intercept-patrol",
+  "version": "1.0.0",
+  "description": "A 3D dimensional shifting game",
+  "source": "DIP.html",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build",
+    "clean": "rm -rf dist .parcel-cache"
+  },
+  "staticFiles": {
+    "staticPath": "src/assets",
+    "staticOutDir": "assets"
+  },
+  "dependencies": {
+    "three": "^0.162.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.14.1",
+    "parcel-reporter-static-files-copy": "^1.5.3"
+  }
+}

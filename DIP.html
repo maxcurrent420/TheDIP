@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dimensional Intercept Patrol</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-color: #5D5CDE;
+      --text-color: #333;
+      --bg-color: #FFFFFF;
+      --panel-bg: rgba(240, 240, 250, 0.85);
+      --enemy-absorb: rgba(255, 255, 0, 0.5);
+      --hud-bg: rgba(10, 10, 40, 0.7);
+      --power-slot-bg: rgba(20, 20, 60, 0.8);
+      --power-slot-active: rgba(93, 92, 222, 0.9);
+      --power-slot-border: #5D5CDE;
+      --warden-msg-bg: rgba(30, 15, 40, 0.85);
+      --health-bar-bg: #333;
+      --health-bar-fill: #ff3e3e;
+      --ammo-bar-fill: #3e9fff;
+      --kill-counter-bg: rgba(20, 20, 40, 0.8);
+      --kill-counter-text: #ffcc00;
+    }
+
+    .dark {
+      --text-color: #f0f0f0;
+      --bg-color: #181818;
+      --panel-bg: rgba(40, 40, 60, 0.9);
+      --enemy-absorb: rgba(255, 255, 0, 0.5);
+      --hud-bg: rgba(20, 20, 40, 0.8);
+      --power-slot-bg: rgba(30, 30, 50, 0.9);
+      --warden-msg-bg: rgba(40, 25, 50, 0.9);
+      --kill-counter-bg: rgba(40, 40, 60, 0.8);
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s ease;
+    }
+
+    #startMenu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(30, 20, 60, 0.9) 0%, rgba(60, 20, 80, 0.9) 100%);
+      z-index: 10;
+      padding: 20px;
+      color: white;
+    }
+
+    #gameTitle {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(93, 92, 222, 0.8);
+      background: linear-gradient(45deg, #5D5CDE, #9594ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    #gameSubtitle {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .menu-button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 10px;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    .menu-button:hover {
+      background-color: #4a49b8;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #hud {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    #powerBar {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .power-slot {
+      width: 60px;
+      height: 60px;
+      margin: 0 5px;
+      border: 2px solid var(--power-slot-border);
+      border-radius: 10px;
+      background-color: var(--power-slot-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .power-slot.active, .power-slot.active-power {
+      background-color: var(--power-slot-active);
+      transform: translateY(-5px);
+      box-shadow: 0 0 15px rgba(255, 102, 0, 0.8);
+      border-color: #ff6600 !important;
+    }
+    
+    .powerstone-slot {
+      border-radius: 50% !important;
+      border-color: #6a6aff !important;
+    }
+    
+    .has-power, .has-stone {
+      border-color: #66ccff !important;
+    }
+
+    .power-icon {
+      width: 70%;
+      height: 70%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+    }
+
+    .power-name {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 0.8rem;
+      text-shadow: 0 0 5px black;
+      white-space: nowrap;
+    }
+
+    #statsBar {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      background-color: var(--hud-bg);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .stat-container {
+      flex: 1;
+      margin: 0 5px;
+    }
+
+    .stat-label {
+      color: white;
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }
+
+    .stat-bar {
+      height: 10px;
+      background-color: var(--health-bar-bg);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .stat-fill {
+      height: 100%;
+      width: 100%;
+      transition: width 0.3s ease;
+    }
+
+    #healthFill {
+      background-color: var(--health-bar-fill);
+    }
+
+    #ammoFill {
+      background-color: var(--ammo-bar-fill);
+    }
+
+    #dimensionIndicator {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--hud-bg);
+      padding: 8px 15px;
+      border-radius: 20px;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: bold;
+      z-index: 5;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      pointer-events: none;
+    }
+
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    #crosshair::before,
+    #crosshair::after {
+      content: '';
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    #crosshair::before {
+      width: 2px;
+      height: 20px;
+      left: 9px;
+      top: 0;
+    }
+
+    #crosshair::after {
+      width: 20px;
+      height: 2px;
+      left: 0;
+      top: 9px;
+    }
+
+    #absorptionIndicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid yellow;
+      background-color: var(--enemy-absorb);
+      z-index: 4;
+      display: none;
+      pointer-events: none;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0.7;
+      }
+
+      50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.9;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0.7;
+      }
+    }
+
+    #wardenMessage {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--warden-msg-bg);
+      padding: 15px;
+      border-radius: 10px;
+      color: white;
+      max-width: 80%;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      border-left: 4px solid purple;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    #instructionsScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 5;
+    }
+
+    #instructions {
+      background-color: rgba(20, 20, 40, 0.9);
+      padding: 30px;
+      border-radius: 10px;
+      color: white;
+      max-width: 80%;
+      border: 2px solid var(--primary-color);
+    }
+
+    #instructions h2 {
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      text-align: center;
+    }
+
+    #instructions p {
+      margin-bottom: 10px;
+    }
+
+    #instructions ul {
+      margin-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    #instructions ul li {
+      margin-bottom: 5px;
+    }
+
+    #deathScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(150, 0, 0, 0.4);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 6;
+    }
+
+    #deathMessage {
+      font-size: 2rem;
+      color: white;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    #controlsInfo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: var(--hud-bg);
+      padding: 10px;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.8rem;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    #errorMessage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background-color: red;
+      color: white;
+      text-align: center;
+      z-index: 100;
+      display: none;
+    }
+
+    #killCounter {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--kill-counter-bg);
+      padding: 8px 15px;
+      border-radius: 20px;
+      color: var(--kill-counter-text);
+      font-size: 1rem;
+      font-weight: bold;
+      z-index: 5;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #minimap {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 225px;
+      height: 225px;
+      background-color: rgba(0, 0, 0, 0.7);
+      border: 2px solid var(--primary-color);
+      border-radius: 5px;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    #minimapCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    #minimapPlayer {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background-color: #00ff00;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+    }
+
+    #minimapEnemy {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background-color: #ff0000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+    }
+
+    #minimapWall {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.3);
+      z-index: 5;
+    }
+
+    #levelIndicator {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--kill-counter-bg);
+      padding: 5px 10px;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.9rem;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Retro pixel-look effect */
+    .pixel-effect {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    @media (max-width: 768px) {
+      #gameTitle {
+        font-size: 1.8rem;
+      }
+
+      #gameSubtitle {
+        font-size: 1rem;
+      }
+
+      .menu-button {
+        padding: 10px 20px;
+        min-width: 180px;
+      }
+
+      #instructions {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="gameContainer"></div>
+
+  <div id="startMenu">
+    <h1 id="gameTitle">The Dimensional Intercept Patrol</h1>
+    <p id="gameSubtitle">Navigate between dimensions. Absorb powers. Protect the multiverse.</p>
+    <button id="startButton" class="menu-button">Start Game</button>
+    <button id="instructionsButton" class="menu-button">Instructions</button>
+  </div>
+
+  <div id="instructionsScreen" style="display: none;">
+    <div id="instructions">
+      <h2>Controls</h2>
+      <p>Move: WASD or Arrow Keys</p>
+      <p>Look: Mouse</p>
+      <p>Shoot: Left Mouse Button</p>
+      <p>Absorb Power: Right Mouse Button (E)</p>
+      <p>Switch Powers: 1, 2, 3</p>
+      <p>Shift Dimension: Q</p>
+      <p>Pause: ESC</p>
+
+      <h2>Gameplay</h2>
+      <p>You are a Guardian of the multiverse, tasked with eliminating dimensional anomalies.</p>
+      <p>Defeat enemies to progress through levels.</p>
+      <p>Absorb powers from enemies by getting close and pressing E or right-clicking.</p>
+      <p>Different dimensions affect gameplay mechanics. Shift between them with Q.</p>
+      <p>Health pickups appear when enemies are defeated.</p>
+
+      <button id="backButton" class="menu-button">Back to Menu</button>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div id="powerBar">
+      <div id="slot1" class="power-slot active">
+        <div class="power-icon"></div>
+        <div class="power-name">Empty</div>
+      </div>
+      <div id="slot2" class="power-slot">
+        <div class="power-icon"></div>
+        <div class="power-name">Empty</div>
+      </div>
+      <div id="slot3" class="power-slot">
+        <div class="power-icon"></div>
+        <div class="power-name">Empty</div>
+      </div>
+      <div id="powerStoneSlot" class="power-slot powerstone-slot" style="border-radius: 50%; margin-left: 20px; border-color: #6a6aff;">
+        <div class="power-icon">💎</div>
+        <div class="power-name">PowerStone</div>
+      </div>
+    </div>
+    <div id="statsBar">
+      <div class="stat-container">
+        <div class="stat-label">Health</div>
+        <div class="stat-bar">
+          <div id="healthFill" class="stat-fill"></div>
+        </div>
+      </div>
+      <div class="stat-container">
+        <div class="stat-label">Energy</div>
+        <div class="stat-bar">
+          <div id="ammoFill" class="stat-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dimensionIndicator">Dimension: PRIME</div>
+  <div id="killCounter">Anomalies: 0/10</div>
+  <div id="levelIndicator">Level 1</div>
+  <div id="crosshair"></div>
+  <div id="absorptionIndicator"></div>
+  <div id="wardenMessage"></div>
+
+  <div id="deathScreen">
+    <h2 id="deathMessage"></h2>
+    <button id="respawnButton" class="menu-button">Try Again</button>
+  </div>
+
+  <div id="controlsInfo">
+    WASD: Move | Mouse: Look | LMB: Shoot<br>
+    RMB/E: Absorb | 1-3: Switch Powers | Q: Shift Dimension
+  </div>
+
+  <div id="minimap">
+    <canvas id="minimapCanvas"></canvas>
+  </div>
+
+  <div id="errorMessage"></div>
+
+  <!-- Modularized code - loaded by Parcel -->
+  <script type="module" src="src/index.js"></script>
+</body>
+
+</html>
